@@ -36,6 +36,6 @@
   (let [system (-> (config/read-config)
                    (real-world-clojure-api-system)
                    (component/start-system))]
-   (println "Starting real world clojure api service with config")
-   (.addShutdownHook (Runtime/getRuntime)
-                     (new Thread. #(component/stop-system system)))))
+    (println "Starting real world clojure api service with config")
+    (.addShutdownHook (Runtime/getRuntime)
+                      (new Thread #(component/stop-system system)))))
