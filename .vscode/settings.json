@@ -1,0 +1,14 @@
+{
+  "calva.customREPLCommandSnippets": [
+    {
+      "name": "Workspace: Component-REPL Reset REPL",
+      "key": "r",
+      "repl": "clj",
+      "ns": "dev",
+      "snippet": "(com.stuartsierra.component.repl/reset)"
+    }
+  ],
+  "calva.jackInEnv": {
+    "REAL_WORLD_CLOJURE_API_SERVER_PORT": 3001,
+  },
+}
