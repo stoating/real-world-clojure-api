@@ -5,11 +5,11 @@
   component/Lifecycle
 
   (start [component]
-    (println ";; Starting ExampleComponentfff")
+    (println "Starting ExampleComponent")
     (assoc component :state ::started))
 
   (stop [component]
-    (println ";; Stopping ExampleComponentfff")
+    (println "Stopping ExampleComponent")
     (assoc component :state nil)))
 
 (defn new-example-component

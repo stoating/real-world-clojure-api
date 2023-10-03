@@ -8,5 +8,3 @@
       (io/resource)
       (aero/read-config)))
 
-(read-config)
-

@@ -1,35 +1,16 @@
 (ns real-world-clojure-api.core
-  (:require [real-world-clojure-api.config :as config]
-            [io.pedestal.http :as http]
-            [io.pedestal.http.route :as route]
+  (:require [com.stuartsierra.component :as component]
+            [real-world-clojure-api.config :as config]
             [real-world-clojure-api.components.example-component :as example-component]
-            [com.stuartsierra.component :as component]))
-
-(defn respond-hello
-  [request]
-  {:status 200
-   :body "Hello, world!"})
-
-(def routes
-  (route/expand-routes
-   #{["/greet" :get respond-hello :route-name :greet]}))
-
-(defn create-server
-  [config]
-  (http/create-server
-   {::http/routes routes
-    ::http/type   :jetty
-    ::http/join   false
-    ::http/port   (-> config :server :port)}))
-
-(defn start
-  [config]
-  (http/start (create-server config)))
+            [real-world-clojure-api.components.pedestal-component :as pedestal-component]))
 
 (defn real-world-clojure-api-system
   [config]
   (component/system-map
-   :example-component (example-component/new-example-component config)))
+   :example-component (example-component/new-example-component config)
+   :pedestal-component (component/using
+                        (pedestal-component/new-pedestal-component config)
+                        [:example-component])))
 
 (defn -main
   []
