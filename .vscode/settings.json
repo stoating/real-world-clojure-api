@@ -1,7 +1,7 @@
 {
   "calva.customREPLCommandSnippets": [
     {
-      "name": "Workspace: Component-REPL Reset REPL",
+      "name": "Workspace: Component-REPL Reset",
       "key": "r",
       "repl": "clj",
       "ns": "dev",
@@ -13,7 +13,7 @@
   },
   "calva.replConnectSequences": [
     {
-      "name": "Jack-in with dev alias",
+      "name": "!!! jack-in with dev alias !!!",
       "projectType": "deps.edn",
       "customJackInCommandLine": "java -jar \".calva\\deps.clj.jar\" -Sdeps \"{:deps {nrepl/nrepl {:mvn/version,\"\"1.0.0\"\"},cider/cider-nrepl {:mvn/version,\"\"0.28.5\"\"}}}\" -M:dev -m nrepl.cmdline --middleware \"[cider.nrepl/cider-middleware]\""
     }

@@ -6,7 +6,7 @@
 (defn respond-hello
   [request]
   {:status 200
-   :body "Hello, world!"})
+   :body "Hi Youtube"})
 
 (def routes
   (route/expand-routes
@@ -20,11 +20,10 @@
     (println "Starting PedestalComponent")
     (let [server (-> {::http/routes routes
                       ::http/type   :jetty
-                      ::http/join   false
+                      ::http/join?  false
                       ::http/port   (-> config :server :port)}
                      (http/create-server)
                      (http/start))]
-      (println "hello")
       (assoc component :server server)))
 
   (stop [component]
