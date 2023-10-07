@@ -16,6 +16,21 @@
       "name": "!!! jack-in with dev alias !!!",
       "projectType": "deps.edn",
       "customJackInCommandLine": "java -jar \".calva\\deps.clj.jar\" -Sdeps \"{:deps {nrepl/nrepl {:mvn/version,\"\"1.0.0\"\"},cider/cider-nrepl {:mvn/version,\"\"0.28.5\"\"}}}\" -M:dev -m nrepl.cmdline --middleware \"[cider.nrepl/cider-middleware]\""
+    },
+    {
+      "name": "!!! jack-in dev breakpoint reader !!!",
+      "projectType": "deps.edn",
+      "customJackInCommandLine": "java -jar \".calva\\deps.clj.jar\" -Sdeps \"{:deps {nrepl/nrepl {:mvn/version,\"\"1.0.0\"\"},cider/cider-nrepl {:mvn/version,\"\"0.28.5\"\"}}}\" -M:dev -m nrepl.cmdline --middleware \"[cider.nrepl/cider-middleware cider.nrepl.middleware.debug/breakpoint-reader]\""
+    },
+    {
+      "name": "!!! jack-in dev debug reader !!!",
+      "projectType": "deps.edn",
+      "customJackInCommandLine": "java -jar \".calva\\deps.clj.jar\" -Sdeps \"{:deps {nrepl/nrepl {:mvn/version,\"\"1.0.0\"\"},cider/cider-nrepl {:mvn/version,\"\"0.28.5\"\"}}}\" -M:dev -m nrepl.cmdline --middleware \"[cider.nrepl/cider-middleware cider.nrepl.middleware.debug/debug-reader]\""
+    },
+    {
+      "name": "!!! jack-in dev debug breakpoint reader !!!",
+      "projectType": "deps.edn",
+      "customJackInCommandLine": "java -jar \".calva\\deps.clj.jar\" -Sdeps \"{:deps {nrepl/nrepl {:mvn/version,\"\"1.0.0\"\"},cider/cider-nrepl {:mvn/version,\"\"0.28.5\"\"}}}\" -M:dev -m nrepl.cmdline --middleware \"[cider.nrepl/cider-middleware cider.nrepl.middleware.debug/breakpoint-reader cider.nrepl.middleware.debug/debug-reader]\""
     }
   ]
 }

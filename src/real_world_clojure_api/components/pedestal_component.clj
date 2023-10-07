@@ -1,5 +1,6 @@
 (ns real-world-clojure-api.components.pedestal-component
-  (:require [com.stuartsierra.component :as component]
+  (:require [io.pedestal.http.body-params :as body-params]
+            [com.stuartsierra.component :as component]
             [io.pedestal.http.content-negotiation :as content-negotiation]
             [io.pedestal.http :as http]
             [io.pedestal.http.route :as route]
@@ -11,9 +12,8 @@
    (response status nil))
   ([status body]
    (merge {:status status
-           :body body
            :headers {"Content-Type" "application/json"}}
-          (when body {:body body}))))
+          (when body {:body (json/encode body)}))))
 
 (def ok (partial response 200))
 (def created (partial response 201))
@@ -37,7 +37,7 @@
                                     :path-params
                                     :todo-id))
            response (if todo
-                      (ok (json/encode todo))
+                      (ok todo)
                       (not-found))]
        (assoc context :response response)))})
 
@@ -57,17 +57,15 @@
    :body "Hi Youtube"})
 
 (defn save-todo!
-  [{:keys [in-memory-state-component]}
-   todo]
-  (swap! (:state-atom in-memory-state-component)
-         conj todo))
+  [{:keys [in-memory-state-component]} todo]
+  (swap! (:state-atom in-memory-state-component) conj todo))
 
 (def post-todo-handler
   {:name :post-todo-handler
    :enter
    (fn [{:keys [dependencies] :as context}]
      (let [request (:request context)
-           todo {}]
+           todo (:json-params request)]
        (save-todo! dependencies todo)
        (assoc context :response (created todo))))})
 
@@ -75,7 +73,7 @@
   (route/expand-routes
    #{["/greet"         :get  greet-handler     :route-name :greet]
      ["/todo/:todo-id" :get  get-todo-handler  :route-name :get-todo]
-     ["/todo"          :post post-todo-handler :route-name :post-todo]}))
+     ["/todo"          :post [(body-params/body-params) post-todo-handler] :route-name :post-todo]}))
 
 (def url-for (route/url-for-routes routes))
 

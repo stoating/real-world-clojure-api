@@ -74,17 +74,27 @@
    (-> url
        (client/get {:throw-exceptions false})
        (select-keys keys)))
-  ([url keys content-type]
+  ([url keys accept-type]
    (-> url
-       (client/get {:accept content-type
+       (client/get {:accept accept-type
                     :throw-exceptions false})
        (select-keys keys)))
-  ([url keys content-type as-type]
+  ([url keys accept-type as-type]
    (-> url
-       (client/get {:accept content-type
+       (client/get {:accept accept-type
                     :as as-type
                     :throw-exceptions false})
        (select-keys keys))))
+
+(defn post-response
+  [url body keys accept content-type as]
+  (-> url
+      (client/post {:accept accept
+                    :content-type content-type
+                    :as as
+                    :throw-exceptions false
+                    :body body})
+      (select-keys keys)))
 
 (defn sut->url
   [sut path]
@@ -118,11 +128,11 @@
       ;;
       (new-test "get-todo-test: body from state")
       (let [url (sut->url sut (url-for :get-todo {:path-params {:todo-id todo-id}}))
-            content-type :json
+            accept-type :json
             as-type :json
             response-exp {:body todo
                           :status ok-code}
-            response-act (get-response url (keys response-exp) content-type as-type)]
+            response-act (get-response url (keys response-exp) accept-type as-type)]
         (pprint (get-response url [:headers]))
         (print-exp-act response-exp response-act)
         (t/is (= response-exp
@@ -141,21 +151,19 @@
 (t/deftest post-todo-test
   (let [todo-id (str (random-uuid))
         todo {:id todo-id
-              :name "my test todo list"
-              :items [{:id (str (random-uuid))
-                       :name "finish the test"}]}]
+              :name "My todo for test"
+              :items []}]
     (with-system
-      [sut (core/real-world-clojure-api-system (m-config))]
-      (reset! (-> sut :in-memory-state-component :state-atom)
-              [todo])
-      ;;
-      (new-test "post-todo-test: created todo added to state")
+      [sut (core/real-world-clojure-api-system {:server {:port (get-free-port)}})]
+      (new-test "post-todo-test: post todo to server")
       (let [url (sut->url sut (url-for :post-todo))
+            accept :json
             content-type :json
-            as-type :json
-            response-exp {:body (json/encode todo)
+            as :json
+            response-exp {:body todo
                           :status created-code}
-            response-act (get-response url (keys response-exp) content-type as-type)]
+            body (json/encode todo)
+            response-act (post-response url body (keys response-exp) accept content-type as)]
         (pprint (get-response url [:headers]))
         (print-exp-act response-exp response-act)
         (t/is (= response-exp
