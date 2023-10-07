@@ -1,20 +1,31 @@
 (ns component.real-world-clojure-api.api-test
-  (:require [clojure.test :as t]
+  (:require [clj-http.client :as client]
             [com.stuartsierra.component :as component]
             [real-world-clojure-api.core :as core]
-            [clj-http.client :as client]))
+            [real-world-clojure-api.components.pedestal-component :refer [url-for]]
+            [clojure.string :as str]
+            [clojure.test :as t])
+  (:import [java.net ServerSocket]))
 
 ;; declare var which will be introduced after executing 'with-system' macro
 (declare sut)
 
 ;; high-level defines
-(def m-config {:server {:address "http://localhost:"
-                        :port 8088}})
+(def localhost "http://localhost:")
 (def http-status {:ok 200})
 
+(defn get-free-port
+  []
+  (with-open [socket (ServerSocket. 0)]
+    (.getLocalPort socket)))
+
+(defn m-config
+  []
+  {:server {:address localhost
+            :port (get-free-port)}})
+
 ;; low-level defines
-(def m-address (get-in m-config [:server :address]))
-(def m-port (get-in m-config [:server :port]))
+(def m-address (get-in (m-config) [:server :address]))
 (def http-ok (get-in http-status [:ok]))
 
 
@@ -32,44 +43,48 @@
        (client/get)
        (select-keys keys))))
 
+(defn sut->url
+  [sut path]
+  (str/join [m-address
+             (-> sut :pedestal-component :config :server :port)
+             path]))
+
 (t/deftest greeting-test
-  (let [path "greet"
-        response-exp {:body "Hi Youtube"
-                      :status http-ok}
-        url (str m-address m-port "/" path)]
+  (let [response-exp {:body "Hi Youtube"
+                      :status http-ok}]
     (with-system
-      [sut (core/real-world-clojure-api-system m-config)]
+      [sut (core/real-world-clojure-api-system (m-config))]
       (t/testing "expected hard-coded body is returned for the greeting")
-      (t/is (= response-exp
-               (response-act url (keys response-exp)))))))
+      (let [url (sut->url sut (url-for :greet))]
+        (t/is (= response-exp
+                 (response-act url (keys response-exp))))))))
 
 (t/deftest todo-test
-  (let [path "todo"
-
-        ; test 1
-        todo-id-1 (random-uuid)
-        todo-1 {:id todo-id-1
-                :name "my test todo list"
-                :items [{:id (random-uuid)
-                         :name "finish the test"}]}
-        url-1 (str m-address m-port "/" path "/" todo-id-1)
-        response-exp-1 {:body (pr-str todo-1)
-                        :status http-ok}
-
-        ; test 2
-        url-2 (str m-address m-port "/" path "/" (random-uuid))
-        response-exp-2 {:body ""
-                        :status http-ok}]
+  (let [todo-id (random-uuid)
+        todo {:id todo-id
+              :name "my test todo list"
+              :items [{:id (random-uuid)
+                       :name "finish the test"}]}]
     (with-system
-      [sut (core/real-world-clojure-api-system m-config)]
+      [sut (core/real-world-clojure-api-system (m-config))]
       (reset! (-> sut :in-memory-state-component :state-atom)
-              [todo-1])
+              [todo])
+      ;;
+      ;;
       (t/testing "expected body is returned for the todo we set in state")
-      (t/is (= response-exp-1
-               (response-act url-1 (keys response-exp-1))))
+      (let [url (sut->url sut (url-for :todo {:path-params {:todo-id todo-id}}))
+            response-exp {:body (pr-str todo)
+                          :status http-ok}]
+        (t/is (= response-exp
+                 (response-act url (keys response-exp)))))
+      ;;
+      ;;
       (t/testing "empty body is returned for some other todo uuid")
-      (t/is (= response-exp-2
-               (response-act url-2 (keys response-exp-2)))))))
+      (let [url (sut->url sut (url-for :todo {:path-params {:todo-id (random-uuid)}}))
+            response-exp {:body ""
+                          :status http-ok}]
+        (t/is (= response-exp
+                 (response-act url (keys response-exp))))))))
 
 (t/deftest a-simple-api-test
   (t/is (= 1 1)))
