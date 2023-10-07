@@ -6,11 +6,11 @@
 
   (start [component]
     (println "Starting ExampleComponent")
-    (assoc component :state ::started))
+    (assoc component :state-atom (atom [])))
 
   (stop [component]
     (println "Stopping ExampleComponent")
-    (assoc component :state nil)))
+    (assoc component :state-atom nil)))
 
 (defn new-example-component
   [config]
