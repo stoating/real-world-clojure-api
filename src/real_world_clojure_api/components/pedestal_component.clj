@@ -3,12 +3,13 @@
             [io.pedestal.http.content-negotiation :as content-negotiation]
             [io.pedestal.http :as http]
             [io.pedestal.http.route :as route]
-            [io.pedestal.interceptor :as interceptor]))
+            [io.pedestal.interceptor :as interceptor]
+            [cheshire.core :as json]))
 
 (defn response [status body]
   {:status status
    :body body
-   :headers nil})
+   :headers {"Content-Type" "application/json"}})
 
 (def ok (partial response 200))
 
@@ -24,13 +25,12 @@
   {:name :todo-handler
    :enter
    (fn [{:keys [dependencies] :as context}]
-     (println "todo-handler" (keys context))
      (let [request (:request context)
-           response (ok (get-todo-by-id dependencies
-                                        (-> request
-                                            :path-params
-                                            :todo-id
-                                            (parse-uuid))))]
+           todo (get-todo-by-id dependencies
+                                (-> request
+                                    :path-params
+                                    :todo-id))
+           response (ok (json/encode todo))]
        (assoc context :response response)))})
 
 (comment
