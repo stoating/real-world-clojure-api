@@ -1,5 +1,6 @@
 (ns real-world-clojure-api.components.pedestal-component
   (:require [com.stuartsierra.component :as component]
+            [io.pedestal.http.content-negotiation :as content-negotiation]
             [io.pedestal.http :as http]
             [io.pedestal.http.route :as route]
             [io.pedestal.interceptor :as interceptor]))
@@ -43,7 +44,7 @@
     :items []}])
 
 (defn greet-handler
-  [request]
+  [_]
   {:status 200
    :body "Hi Youtube"})
 
@@ -61,6 +62,10 @@
     :enter (fn [context]
              (assoc context :dependencies dependencies))}))
 
+(def content-negotiation-interceptor
+  (content-negotiation/negotiate-content
+   ["application/json"]))
+
 (defrecord PedestalComponent
            [config
             example-component
@@ -75,7 +80,8 @@
                       ::http/port   (-> config :server :port)}
                      (http/default-interceptors)
                      (update ::http/interceptors concat
-                             [(inject-dependencies component)])
+                             [(inject-dependencies component)
+                              content-negotiation-interceptor])
                      (http/create-server)
                      (http/start))]
       (assoc component :server server)))
