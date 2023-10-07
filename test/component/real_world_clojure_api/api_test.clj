@@ -36,32 +36,40 @@
   (let [path "greet"
         response-exp {:body "Hi Youtube"
                       :status http-ok}
-        address m-address
-        port m-port
-        url (str address port "/" path)]
+        url (str m-address m-port "/" path)]
     (with-system
       [sut (core/real-world-clojure-api-system m-config)]
+      (t/testing "expected hard-coded body is returned for the greeting")
       (t/is (= response-exp
                (response-act url (keys response-exp)))))))
 
 (t/deftest todo-test
   (let [path "todo"
+
+        ; test 1
         todo-id-1 (random-uuid)
         todo-1 {:id todo-id-1
                 :name "my test todo list"
                 :items [{:id (random-uuid)
                          :name "finish the test"}]}
-        response-exp {:body (pr-str todo-1)
-                      :status http-ok}
-        address m-address
-        port m-port
-        url (str address port "/" path "/" todo-id-1)]
+        url-1 (str m-address m-port "/" path "/" todo-id-1)
+        response-exp-1 {:body (pr-str todo-1)
+                        :status http-ok}
+
+        ; test 2
+        url-2 (str m-address m-port "/" path "/" (random-uuid))
+        response-exp-2 {:body ""
+                        :status http-ok}]
     (with-system
       [sut (core/real-world-clojure-api-system m-config)]
       (reset! (-> sut :in-memory-state-component :state-atom)
               [todo-1])
-      (t/is (= response-exp
-               (response-act url (keys response-exp)))))))
+      (t/testing "expected body is returned for the todo we set in state")
+      (t/is (= response-exp-1
+               (response-act url-1 (keys response-exp-1))))
+      (t/testing "empty body is returned for some other todo uuid")
+      (t/is (= response-exp-2
+               (response-act url-2 (keys response-exp-2)))))))
 
 (t/deftest a-simple-api-test
   (t/is (= 1 1)))
