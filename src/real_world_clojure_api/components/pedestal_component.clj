@@ -6,12 +6,18 @@
             [io.pedestal.interceptor :as interceptor]
             [cheshire.core :as json]))
 
-(defn response [status body]
-  {:status status
-   :body body
-   :headers {"Content-Type" "application/json"}})
+(defn response
+  ([status]
+   (response status nil))
+  ([status body]
+   (merge {:status status
+           :body body
+           :headers {"Content-Type" "application/json"}}
+          (when body {:body body}))))
 
 (def ok (partial response 200))
+(def created (partial response 201))
+(def not-found (partial response 404))
 
 (defn get-todo-by-id
   [{:keys [in-memory-state-component]}
@@ -21,8 +27,8 @@
                  (= todo-id (:id todo))))
        (first)))
 
-(def todo-handler
-  {:name :todo-handler
+(def get-todo-handler
+  {:name :get-todo-handler
    :enter
    (fn [{:keys [dependencies] :as context}]
      (let [request (:request context)
@@ -30,7 +36,9 @@
                                 (-> request
                                     :path-params
                                     :todo-id))
-           response (ok (json/encode todo))]
+           response (if todo
+                      (ok (json/encode todo))
+                      (not-found))]
        (assoc context :response response)))})
 
 (comment
@@ -48,10 +56,26 @@
   {:status 200
    :body "Hi Youtube"})
 
+(defn save-todo!
+  [{:keys [in-memory-state-component]}
+   todo]
+  (swap! (:state-atom in-memory-state-component)
+         conj todo))
+
+(def post-todo-handler
+  {:name :post-todo-handler
+   :enter
+   (fn [{:keys [dependencies] :as context}]
+     (let [request (:request context)
+           todo {}]
+       (save-todo! dependencies todo)
+       (assoc context :response (created todo))))})
+
 (def routes
   (route/expand-routes
-   #{["/greet"         :get greet-handler :route-name :greet]
-     ["/todo/:todo-id" :get  todo-handler :route-name :todo]}))
+   #{["/greet"         :get  greet-handler     :route-name :greet]
+     ["/todo/:todo-id" :get  get-todo-handler  :route-name :get-todo]
+     ["/todo"          :post post-todo-handler :route-name :post-todo]}))
 
 (def url-for (route/url-for-routes routes))
 

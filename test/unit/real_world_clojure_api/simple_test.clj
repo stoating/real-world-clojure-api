@@ -11,4 +11,4 @@
   (t/testing "todo by id endpoint url"
     (let [todo-id (random-uuid)]
       (t/is (= (str "/todo/" todo-id)
-               (url-for :todo {:path-params {:todo-id todo-id}}))))))
+               (url-for :get-todo {:path-params {:todo-id todo-id}}))))))
