@@ -7,4 +7,3 @@
   (-> "config.edn"
       (io/resource)
       (aero/read-config)))
-
