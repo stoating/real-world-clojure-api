@@ -36,13 +36,16 @@
              :not-found {:code 404
                          :reason "Not Found"}
              :not-acceptable {:code 406
-                              :reason "Not Acceptable"}})
+                              :reason "Not Acceptable"}
+             :internal-server-error {:code 500
+                                     :reason "Internal Server Error"}})
 
 (def ok-code (get-in status [:ok :code]))
 (def created-code (get-in status [:created :code]))
 (def not-found-code (get-in status [:not-found :code]))
 (def not-acceptable-code (get-in status [:not-acceptable :code]))
 (def not-acceptable-reason (get-in status [:not-acceptable :reason]))
+(def internal-server-error-code (get-in status [:internal-server-error :code]))
 
 (defn get-free-port
   []
@@ -66,35 +69,28 @@
        (finally
          (component/stop ~bound-var)))))
 
-(defn get-response
+(defn http-get
   ([url]
    (-> url
        (client/get {:throw-exceptions false})))
-  ([url keys]
-   (-> url
-       (client/get {:throw-exceptions false})
-       (select-keys keys)))
-  ([url keys accept-type]
+  ([url accept-type]
    (-> url
        (client/get {:accept accept-type
-                    :throw-exceptions false})
-       (select-keys keys)))
-  ([url keys accept-type as-type]
+                    :throw-exceptions false})))
+  ([url accept-type as-type]
    (-> url
        (client/get {:accept accept-type
                     :as as-type
-                    :throw-exceptions false})
-       (select-keys keys))))
+                    :throw-exceptions false}))))
 
-(defn post-response
-  [url body keys accept content-type as]
+(defn http-post
+  [url body accept content-type as]
   (-> url
       (client/post {:accept accept
                     :content-type content-type
                     :as as
                     :throw-exceptions false
-                    :body body})
-      (select-keys keys)))
+                    :body body})))
 
 (defn sut->url
   [sut path]
@@ -102,18 +98,22 @@
              (-> sut :pedestal-component :config :server :port)
              path]))
 
+(defn run-test
+  [response response-exp response-act]
+  (pprint response)
+  (print-exp-act response-exp response-act)
+  (t/is (= response-exp
+           response-act)))
+
 (t/deftest greeting-test
   (with-system
     [sut (core/real-world-clojure-api-system (m-config))]
     (new-test "greeting-test: return standard greeting")
     (let [url (sut->url sut (url-for :greet))
-          response-exp {:body "Hi Youtube"
-                        :status ok-code}
-          response-act (get-response url (keys response-exp))]
-      (pprint (get-response url [:headers]))
-      (print-exp-act response-exp response-act)
-      (t/is (= response-exp
-               response-act)))))
+          response (http-get url)
+          response-exp {:body "Hi Youtube" :status ok-code}
+          response-act (select-keys response (keys response-exp))]
+      (run-test response response-exp response-act))))
 
 (t/deftest get-todo-test
   (let [todo-id (str (random-uuid))
@@ -125,28 +125,18 @@
       [sut (core/real-world-clojure-api-system (m-config))]
       (reset! (-> sut :in-memory-state-component :state-atom)
               [todo])
-      ;;
       (new-test "get-todo-test: body from state")
       (let [url (sut->url sut (url-for :get-todo {:path-params {:todo-id todo-id}}))
-            accept-type :json
-            as-type :json
-            response-exp {:body todo
-                          :status ok-code}
-            response-act (get-response url (keys response-exp) accept-type as-type)]
-        (pprint (get-response url [:headers]))
-        (print-exp-act response-exp response-act)
-        (t/is (= response-exp
-                 response-act)))
-      ;;
+            response (http-get url :json :json)
+            response-exp {:body todo :status ok-code}
+            response-act (select-keys response (keys response-exp))]
+        (run-test response response-exp response-act))
       (new-test "get-todo-test: empty body from todo not in state is 404")
       (let [url (sut->url sut (url-for :get-todo {:path-params {:todo-id (random-uuid)}}))
-            response-exp {:body ""
-                          :status not-found-code}
-            response-act (get-response url (keys response-exp))]
-        (pprint (get-response url))
-        (print-exp-act response-exp response-act)
-        (t/is (= response-exp
-                 response-act))))))
+            response (http-get url)
+            response-exp {:body "" :status not-found-code}
+            response-act (select-keys response (keys response-exp))]
+        (run-test response response-exp response-act)))))
 
 (t/deftest post-todo-test
   (let [todo-id (str (random-uuid))
@@ -157,40 +147,38 @@
       [sut (core/real-world-clojure-api-system {:server {:port (get-free-port)}})]
       (new-test "post-todo-test: post todo to server")
       (let [url (sut->url sut (url-for :post-todo))
-            accept :json
-            content-type :json
-            as :json
-            response-exp {:body todo
-                          :status created-code}
             body (json/encode todo)
-            response-act (post-response url body (keys response-exp) accept content-type as)]
-        (pprint (get-response url [:headers]))
-        (print-exp-act response-exp response-act)
-        (t/is (= response-exp
-                 response-act))))))
+            response (http-post url body :json :json :json)
+            response-exp {:body todo :status created-code}
+            response-act (select-keys response (keys response-exp))]
+        (run-test response response-exp response-act))
+      (new-test "post-todo-test: get after posting returns the todo")
+      (let [url (sut->url sut (url-for :get-todo {:path-params {:todo-id todo-id}}))
+            response (http-get url :json :json)
+            response-exp {:body todo :status ok-code}
+            response-act (select-keys response (keys response-exp))]
+        (run-test response response-exp response-act))
+      (new-test "post-todo-test: post with missing body content is 500")
+      (let [url (sut->url sut (url-for :post-todo))
+            body (json/encode {:id todo-id})
+            response (http-post url body :json :json :json)
+            response-exp {:status internal-server-error-code}
+            response-act (select-keys response (keys response-exp))]
+        (run-test response response-exp response-act)))))
+
 
 (t/deftest content-negotiation-test
   (with-system
     [sut (core/real-world-clojure-api-system (m-config))]
-    ;;
     (new-test "content-negotiation-test: json shall be accepted")
     (let [url (sut->url sut (url-for :greet))
-          content-type :json
-          response-exp {:body "Hi Youtube"
-                        :status ok-code}
-          response-act (get-response url (keys response-exp) content-type)]
-      (pprint (get-response url [:headers]))
-      (print-exp-act response-exp response-act)
-      (t/is (= response-exp
-               response-act)))
-    ;;
+          response-exp {:body "Hi Youtube" :status ok-code}
+          response (http-get url :json)
+          response-act (select-keys response (keys response-exp))]
+      (run-test response response-exp response-act))
     (new-test "content-negotiation-test: edn shall be rejected")
     (let [url (sut->url sut (url-for :greet))
-          content-type :edn
-          response-exp {:body not-acceptable-reason
-                        :status not-acceptable-code}
-          response-act (get-response url (keys response-exp) content-type)]
-      (pprint (get-response url [:headers]))
-      (print-exp-act response-exp response-act)
-      (t/is (= response-exp
-               response-act)))))
+          response (http-get url :edn)
+          response-exp {:body not-acceptable-reason :status not-acceptable-code}
+          response-act (select-keys response (keys response-exp))]
+      (run-test response response-exp response-act))))

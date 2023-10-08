@@ -5,7 +5,8 @@
         io.pedestal/pedestal.jetty      {:mvn/version "0.6.0"}
         io.pedestal/pedestal.route      {:mvn/version "0.6.0"}
         io.pedestal/pedestal.service    {:mvn/version "0.6.0"}
-        org.slf4j/slf4j-simple          {:mvn/version "2.0.7"}}
+        org.slf4j/slf4j-simple          {:mvn/version "2.0.7"}
+        prismatic/schema                {:mvn/version "1.4.1"}}
  :aliases {:dev {:main-opts ["-e" "(require, 'dev)"
                              "-e" "(in-ns, 'dev)"]}
            :test {:extra-paths ["test"]

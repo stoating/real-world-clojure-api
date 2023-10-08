@@ -5,7 +5,8 @@
             [io.pedestal.http :as http]
             [io.pedestal.http.route :as route]
             [io.pedestal.interceptor :as interceptor]
-            [cheshire.core :as json]))
+            [cheshire.core :as json]
+            [schema.core :as s]))
 
 (defn response
   ([status]
@@ -60,12 +61,24 @@
   [{:keys [in-memory-state-component]} todo]
   (swap! (:state-atom in-memory-state-component) conj todo))
 
+(s/defschema
+  TodoItem
+  {:id s/Str
+   :name s/Str
+   :status s/Str})
+
+(s/defschema
+  Todo
+  {:id s/Str
+   :name s/Str
+   :items [TodoItem]})
+
 (def post-todo-handler
   {:name :post-todo-handler
    :enter
    (fn [{:keys [dependencies] :as context}]
      (let [request (:request context)
-           todo (:json-params request)]
+           todo (s/validate Todo (:json-params request))]
        (save-todo! dependencies todo)
        (assoc context :response (created todo))))})
 
