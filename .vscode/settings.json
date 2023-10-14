@@ -39,10 +39,10 @@
       "server": "localhost",
       "port": 5432,
       "driver": "PostgreSQL",
-      "name": "postgres@localhost",
-      "database": "vs-database",
-      "username": "vs-username",
-      "password": "vs-password"
+      "name": "docker-database@localhost",
+      "database": "docker-database",
+      "username": "docker-username",
+      "password": "docker-password"
     }
   ]
 }
