@@ -28,8 +28,8 @@
                  (= todo-id (:id todo))))
        (first)))
 
-(def get-todo-handler
-  {:name :get-todo-handler
+(def todo-handler-get
+  {:name :todo-handler-get
    :enter
    (fn [{:keys [dependencies] :as context}]
      (let [request (:request context)
@@ -42,13 +42,13 @@
                       (not-found))]
        (assoc context :response response)))})
 
-(def get-info-handler
-  {:name :get-todo-handler
+(def info-handler-get
+  {:name :todo-handler-get
    :enter
    (fn [{:keys [dependencies] :as context}]
      (let [{:keys [data-source]} dependencies]
        (assoc context :response {:status 200
-                                  :body "Hi Youtube"})))})
+                                  :body "Hi Greet"})))})
 
 (comment
   [{:id (random-uuid)
@@ -60,7 +60,7 @@
     :name "empty todo list"
     :items []}])
 
-(defn get-greet-handler
+(defn greet-handler-get
   [_]
   {:status 200
    :body "Hi Youtube"})
@@ -81,8 +81,8 @@
    :name s/Str
    :items [TodoItem]})
 
-(def post-todo-handler
-  {:name :post-todo-handler
+(def todo-handler-post
+  {:name :todo-handler-post
    :enter
    (fn [{:keys [dependencies] :as context}]
      (let [request (:request context)
@@ -92,10 +92,10 @@
 
 (def routes
   (route/expand-routes
-   #{["/greet"         :get  get-greet-handler :route-name :greet]
-     ["/info"          :get  get-info-handler  :route-name :info]
-     ["/todo/:todo-id" :get  get-todo-handler  :route-name :get-todo]
-     ["/todo"          :post [(body-params/body-params) post-todo-handler] :route-name :post-todo]}))
+   #{["/greet"         :get  greet-handler-get :route-name :greet-get]
+     ["/info"          :get  info-handler-get  :route-name :info-get]
+     ["/todo/:todo-id" :get  todo-handler-get  :route-name :todo-get]
+     ["/todo"          :post [(body-params/body-params) todo-handler-post] :route-name :todo-post]}))
 
 (def url-for (route/url-for-routes routes))
 

@@ -5,9 +5,9 @@
 
 (t/deftest a-simple-persistence-test
   (let [database-container (doto (PostgreSQLContainer. "postgres:15.4")
-                             (.withDatabaseName "some-database-name")
+                             (.withDatabaseName "test-database-name")
                              (.withUsername "Zachary")
-                             (.withPassword "some-password"))]
+                             (.withPassword "test-password"))]
     (try
       (.start database-container)
       (let [ds (jdbc/get-datasource {:jdbcUrl (.getJdbcUrl database-container)

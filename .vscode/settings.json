@@ -40,9 +40,9 @@
       "port": 5432,
       "driver": "PostgreSQL",
       "name": "postgres@localhost",
-      "database": "postgres",
-      "username": "Zachary",
-      "password": "password"
+      "database": "vs-database",
+      "username": "vs-username",
+      "password": "vs-password"
     }
   ]
 }

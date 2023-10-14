@@ -109,7 +109,7 @@
   (with-system
     [sut (core/real-world-clojure-api-system (m-config))]
     (new-test "greeting-test: return standard greeting")
-    (let [url (sut->url sut (url-for :greet))
+    (let [url (sut->url sut (url-for :greet-get))
           response (http-get url)
           response-exp {:body "Hi Youtube" :status ok-code}
           response-act (select-keys response (keys response-exp))]
@@ -126,13 +126,13 @@
       (reset! (-> sut :in-memory-state-component :state-atom)
               [todo])
       (new-test "get-todo-test: body from state")
-      (let [url (sut->url sut (url-for :get-todo {:path-params {:todo-id todo-id}}))
+      (let [url (sut->url sut (url-for :todo-get {:path-params {:todo-id todo-id}}))
             response (http-get url :json :json)
             response-exp {:body todo :status ok-code}
             response-act (select-keys response (keys response-exp))]
         (run-test response response-exp response-act))
       (new-test "get-todo-test: empty body from todo not in state is 404")
-      (let [url (sut->url sut (url-for :get-todo {:path-params {:todo-id (random-uuid)}}))
+      (let [url (sut->url sut (url-for :todo-get {:path-params {:todo-id (random-uuid)}}))
             response (http-get url)
             response-exp {:body "" :status not-found-code}
             response-act (select-keys response (keys response-exp))]
@@ -146,20 +146,20 @@
     (with-system
       [sut (core/real-world-clojure-api-system {:server {:port (get-free-port)}})]
       (new-test "post-todo-test: post todo to server")
-      (let [url (sut->url sut (url-for :post-todo))
+      (let [url (sut->url sut (url-for :todo-post))
             body (json/encode todo)
             response (http-post url body :json :json :json)
             response-exp {:body todo :status created-code}
             response-act (select-keys response (keys response-exp))]
         (run-test response response-exp response-act))
       (new-test "post-todo-test: get after posting returns the todo")
-      (let [url (sut->url sut (url-for :get-todo {:path-params {:todo-id todo-id}}))
+      (let [url (sut->url sut (url-for :todo-get {:path-params {:todo-id todo-id}}))
             response (http-get url :json :json)
             response-exp {:body todo :status ok-code}
             response-act (select-keys response (keys response-exp))]
         (run-test response response-exp response-act))
       (new-test "post-todo-test: post with missing body content is 500")
-      (let [url (sut->url sut (url-for :post-todo))
+      (let [url (sut->url sut (url-for :todo-post))
             body (json/encode {:id todo-id})
             response (http-post url body :json :json :json)
             response-exp {:status internal-server-error-code}
@@ -171,13 +171,13 @@
   (with-system
     [sut (core/real-world-clojure-api-system (m-config))]
     (new-test "content-negotiation-test: json shall be accepted")
-    (let [url (sut->url sut (url-for :greet))
+    (let [url (sut->url sut (url-for :greet-get))
           response-exp {:body "Hi Youtube" :status ok-code}
           response (http-get url :json)
           response-act (select-keys response (keys response-exp))]
       (run-test response response-exp response-act))
     (new-test "content-negotiation-test: edn shall be rejected")
-    (let [url (sut->url sut (url-for :greet))
+    (let [url (sut->url sut (url-for :greet-get))
           response (http-get url :edn)
           response-exp {:body not-acceptable-reason :status not-acceptable-code}
           response-act (select-keys response (keys response-exp))]
