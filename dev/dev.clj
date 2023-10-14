@@ -6,6 +6,6 @@
  (fn [_]
    (core/real-world-clojure-api-system
     {:server {:port 3001}
-     :db-spec {:gdbcUrl "jdbc:postgresql://localhost:5432/rwca"
-               :username "Zachary"
-               :password "password"}})))
+     :db-spec {:jdbcUrl "jdbc:postgresql://localhost:5432/database"
+               :username "my_username"
+               :password "my_password"}})))

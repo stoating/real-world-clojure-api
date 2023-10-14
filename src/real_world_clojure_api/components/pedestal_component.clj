@@ -42,6 +42,14 @@
                       (not-found))]
        (assoc context :response response)))})
 
+(def get-info-handler
+  {:name :get-todo-handler
+   :enter
+   (fn [{:keys [dependencies] :as context}]
+     (let [{:keys [data-source]} dependencies]
+       (assoc context :response {:status 200
+                                  :body "Hi Youtube"})))})
+
 (comment
   [{:id (random-uuid)
     :name "my todo list"
@@ -52,7 +60,7 @@
     :name "empty todo list"
     :items []}])
 
-(defn greet-handler
+(defn get-greet-handler
   [_]
   {:status 200
    :body "Hi Youtube"})
@@ -84,7 +92,8 @@
 
 (def routes
   (route/expand-routes
-   #{["/greet"         :get  greet-handler     :route-name :greet]
+   #{["/greet"         :get  get-greet-handler :route-name :greet]
+     ["/info"          :get  get-info-handler  :route-name :info]
      ["/todo/:todo-id" :get  get-todo-handler  :route-name :get-todo]
      ["/todo"          :post [(body-params/body-params) post-todo-handler] :route-name :post-todo]}))
 

@@ -26,6 +26,7 @@
    (component/using
     (pedestal-component/new-pedestal-component config)
     [:example-component
+     :data-source
      :in-memory-state-component])))
 
 (defn -main
