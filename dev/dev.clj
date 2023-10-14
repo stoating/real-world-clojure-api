@@ -3,5 +3,9 @@
             [real-world-clojure-api.core :as core]))
 
 (component-repl/set-init
- (fn [_old-system]
-   (core/real-world-clojure-api-system {:server {:port 3001}})))
+ (fn [_]
+   (core/real-world-clojure-api-system
+    {:server {:port 3001}
+     :db-spec {:gdbcUrl "jdbc:postgresql://localhost:5432/rwca"
+               :username "Zachary"
+               :password "password"}})))

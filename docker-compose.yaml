@@ -1,0 +1,13 @@
+# docker compose up -d
+version: "3.9"
+
+services:
+  database:
+    image: postgres:15.4
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: 'Zachary'
+      POSTGRES_PASSWORD: 'password'
+      POSTGRES_DB: 'rwca'
+      POSTGRES_INITDB_ARGS: '--encoding=UTF-8'
