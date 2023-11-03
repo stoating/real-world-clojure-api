@@ -19,14 +19,14 @@
    :in-memory-state-component
    (in-memory-state-component/new-in-memory-state-component config)
    ;;
-   ;;:data-source
-   ;;(connection/component HikariDataSource (:db-spec config))
+   :data-source
+   (connection/component HikariDataSource (:db-spec config))
    ;;
    :pedestal-component
    (component/using
     (pedestal-component/new-pedestal-component config)
     [:example-component
-     ;;:data-source
+     :data-source
      :in-memory-state-component])))
 
 (defn -main

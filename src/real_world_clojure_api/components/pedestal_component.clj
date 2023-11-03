@@ -1,11 +1,12 @@
 (ns real-world-clojure-api.components.pedestal-component
-  (:require [io.pedestal.http.body-params :as body-params]
+  (:require [cheshire.core :as json]
             [com.stuartsierra.component :as component]
-            [io.pedestal.http.content-negotiation :as content-negotiation]
             [io.pedestal.http :as http]
+            [io.pedestal.http.body-params :as body-params]
+            [io.pedestal.http.content-negotiation :as content-negotiation]
             [io.pedestal.http.route :as route]
             [io.pedestal.interceptor :as interceptor]
-            [cheshire.core :as json]
+            [next.jdbc :as jdbc]
             [schema.core :as s]))
 
 (defn response
@@ -46,9 +47,12 @@
   {:name :todo-handler-get
    :enter
    (fn [{:keys [dependencies] :as context}]
-     (let [{:keys [data-source]} dependencies]
+     (let [{:keys [data-source]} dependencies
+           db-response (first (jdbc/execute!
+                               (data-source)
+                               ["SHOW SERVER_VERSION"]))]
        (assoc context :response {:status 200
-                                  :body "Hi Greet"})))})
+                                  :body (str "Database server version " (:server_version db-response))})))})
 
 (comment
   [{:id (random-uuid)

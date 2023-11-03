@@ -7,5 +7,5 @@
    (core/real-world-clojure-api-system
     {:server {:port 3001}
      :db-spec {:jdbcUrl "jdbc:postgresql://localhost:5432/database"
-               :username "dev-username"
-               :password "dev-password"}})))
+               :username "username"
+               :password "password"}})))

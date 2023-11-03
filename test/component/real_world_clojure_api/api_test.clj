@@ -131,7 +131,7 @@
             response-exp {:body todo :status ok-code}
             response-act (select-keys response (keys response-exp))]
         (run-test response response-exp response-act))
-      (new-test "get-todo-test: empty body from todo not in state is 404")
+      (new-test "get-todo-test: empty body from todo not in state 404")
       (let [url (sut->url sut (url-for :todo-get {:path-params {:todo-id (random-uuid)}}))
             response (http-get url)
             response-exp {:body "" :status not-found-code}
