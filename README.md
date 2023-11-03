@@ -2,4 +2,5 @@
 
 following along the tutorial from:  
 https://www.youtube.com/@andrey.fadeev  
-(go like and subscribe)
+https://github.com/andfadeev/real-world-clojure-api  
+(go like, star and subscribe)

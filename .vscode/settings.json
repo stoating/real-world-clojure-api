@@ -9,7 +9,8 @@
     }
   ],
   "calva.jackInEnv": {
-    "REAL_WORLD_CLOJURE_API_SERVER_PORT": 3001
+    "REAL_WORLD_CLOJURE_API_SERVER_PORT": 3001,
+    "RWCA_HTMX_SERVER_PORT": 3002
   },
   "calva.replConnectSequences": [
     {

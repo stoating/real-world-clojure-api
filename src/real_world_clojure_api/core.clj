@@ -7,6 +7,8 @@
              :as in-memory-state-component]
             [real-world-clojure-api.components.pedestal-component
              :as pedestal-component]
+            [real-world-clojure-api.components.htmx-pedestal-component
+             :as htmx-pedestal-component]
             [next.jdbc.connection :as connection])
   (:import (com.zaxxer.hikari HikariDataSource)))
 
@@ -27,7 +29,12 @@
     (pedestal-component/new-pedestal-component config)
     [:example-component
      :data-source
-     :in-memory-state-component])))
+     :in-memory-state-component])
+   ;;
+   :htmx-pedestal-component
+   (component/using
+    (htmx-pedestal-component/new-htmx-pedestal-component config)
+    [:in-memory-state-component])))
 
 (defn -main
   []
