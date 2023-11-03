@@ -8,9 +8,12 @@
     (println "Starting InMemoryStateComponent")
     (assoc component :state-atom (atom [])
            :htmx-click-to-edit-state
-           (atom {:first-name "honk"
-                  :last-name "mbonk"
-                  :email "honk.mabonk@gmail.com"})))
+           (atom {"1" {:first-name "honk"
+                       :last-name "mbonk"
+                       :email "honk.mabonk@gmail.com"}
+                  "2" {:first-name "donk"
+                       :last-name "sssss"
+                       :email "honk.mabonk@gmail.com"}})))
 
   (stop [component]
     (println "Stopping InMemoryStateComponent")

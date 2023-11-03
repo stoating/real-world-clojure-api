@@ -2,7 +2,8 @@
   (:require [clojure.string :as str]
             [hiccup.page :as hp]
             [hiccup2.core :as h]
-            [io.pedestal.http.body-params :as body-params]))
+            [io.pedestal.http.body-params :as body-params]
+            [clojure.pprint :as pprint]))
 
 
 
@@ -59,7 +60,8 @@
 
 
 (defn user-details-component
-  [{:keys [first-name
+  [{:keys [id
+           first-name
            last-name
            email]}]
   [:div {:class (tw [:p-5 :bg-slate-100])
@@ -75,18 +77,19 @@
     [:label "Email:"]
     [:span {:class (tw [:font-bold])} email]]
    [:button {:class (tw [tw-primary-button :mt-5])
-             :hx-get "/htmx/click-to-edit/user/1/edit"}
+             :hx-get (format "/htmx/click-to-edit/user/%s/edit" id)}
     "Click To Edit"]])
 
 
 (defn click-to-edit-form
-  [{:keys [first-name
+  [{:keys [id
+           first-name
            last-name
            email]}]
   [:form
    {:class (tw [:bg-slate-100
                 :p-5])
-    :hx-put "/htmx/click-to-edit/user/1/edit"
+    :hx-put (format "/htmx/click-to-edit/user/%s/edit" id)
     :hx-target "this"
     :hx-swap "outerHTML"}
    [:div {:class "mt-2 flex gap-2 items-center"}
@@ -118,12 +121,15 @@
   {:name ::root
    :enter
    (fn [{:keys [dependencies] :as context}]
-     (let [response
+     (let [users @(dependencies->state dependencies)
+           response
            (-> [:div
                 [:h1 {:class "text-2xl font-bold leading-7 text-gray-900 mb-5"}
                  "Click to edit"]
-                (user-details-component
-                 @(dependencies->state dependencies))]
+                (map (fn [[id user]]
+                     [:div {:class (tw [:mt-2])}
+                     (user-details-component (assoc user :id id))])
+                     users)]
                (layout)
                (ok))]
        (assoc context :response response)))})
@@ -133,8 +139,11 @@
   {:name ::get
    :enter
    (fn [{:keys [dependencies] :as context}]
-     (let [response
-           (-> @(dependencies->state dependencies)
+     (let [user-id (-> context :request :path-params :user-id)
+           users @(dependencies->state dependencies)
+           user (get users user-id)
+           response
+           (-> (assoc user :id user-id)
                (click-to-edit-form)
                (ok))]
        (assoc context :response response)))})
@@ -144,10 +153,13 @@
   {:name ::put
    :enter
    (fn [{:keys [dependencies request] :as context}]
-     (reset! (dependencies->state dependencies)
-             (:form-params request))
-     (let [response
-           (-> @(dependencies->state dependencies)
+     (let [user-id (-> context :request :path-params :user-id)
+           _ (swap! (dependencies->state dependencies)
+                    assoc user-id (:form-params request))
+           users @(dependencies->state dependencies)
+           user (get users user-id)
+           response
+           (-> (assoc user :id user-id)
                (user-details-component)
                (ok))]
        (assoc context :response response)))})
