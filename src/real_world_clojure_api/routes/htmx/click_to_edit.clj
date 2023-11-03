@@ -8,7 +8,7 @@
 
 (defn ok
   [body]
-  {:status 700
+  {:status 200
    :headers {"Content-Type" "text/html"}
    :body (-> body
              (h/html)
@@ -122,7 +122,7 @@
            (-> [:div
                 [:h1 {:class "text-2xl font-bold leading-7 text-gray-900 mb-5"}
                  "Click to edit"]
-                (user-details-component
+                #_(user-details-component
                  @(dependencies->state dependencies))]
                (layout)
                (ok))]

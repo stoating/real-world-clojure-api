@@ -4,8 +4,7 @@
               [io.pedestal.http.route :as route]
               [io.pedestal.interceptor :as interceptor]
               [real-world-clojure-api.routes.htmx.click-to-edit
-               :as click-to-edit]
-              [real-world-clojure-api.components.in-memory-state-component :as in-memory-state-component]))
+               :as click-to-edit]))
 
 (def routes
   (route/expand-routes
