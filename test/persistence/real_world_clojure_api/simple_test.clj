@@ -11,7 +11,7 @@
     (try
       (.start database-container)
       (let [ds (jdbc/get-datasource {:jdbcUrl (.getJdbcUrl database-container)
-                                     :userName (.getUsername database-container)
+                                     :username (.getUsername database-container)
                                      :password (.getPassword database-container)})]
         (t/is (= {:result 1}
                  (first (jdbc/execute! ds ["select 1 as result;"])))))

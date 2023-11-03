@@ -7,7 +7,8 @@
             [clojure.test :as t]
             [clojure.pprint :refer [pprint]]
             [cheshire.core :as json])
-  (:import [java.net ServerSocket]))
+  (:import [java.net ServerSocket]
+           [org.testcontainers.containers PostgreSQLContainer]))
 
 (defn long-str [& strings] (clojure.string/join "\n" strings))
 (defn new-test
@@ -53,9 +54,15 @@
     (.getLocalPort socket)))
 
 (defn m-config
-  []
-  {:server {:address localhost
-            :port (get-free-port)}})
+  ([]
+   {:server {:address localhost
+             :port (get-free-port)}})
+  ([database-container]
+   {:server {:address localhost
+             :port (get-free-port)}
+    :db-spec {:jdbcUrl (.getJdbcUrl database-container)
+              :userName (.getUsername database-container)
+              :password (.getPassword database-container)}}))
 
 ;; low-level defines
 (def m-address (get-in (m-config) [:server :address]))
@@ -106,79 +113,111 @@
            response-act)))
 
 (t/deftest greeting-test
-  (with-system
-    [sut (core/real-world-clojure-api-system (m-config))]
-    (new-test "greeting-test: return standard greeting")
-    (let [url (sut->url sut (url-for :greet-get))
-          response (http-get url)
-          response-exp {:body "Hi Youtube" :status ok-code}
-          response-act (select-keys response (keys response-exp))]
-      (run-test response response-exp response-act))))
+  (let [database-container (doto (PostgreSQLContainer. "postgres:15.4")
+                             (.withDatabaseName "test-database-name")
+                             (.withUsername "Zachary")
+                             (.withPassword "test-password"))]
+    (try
+      (.start database-container)
+      (with-system
+        [sut (core/real-world-clojure-api-system (m-config database-container))]
+        (new-test "greeting-test: return standard greeting")
+        (let [url (sut->url sut (url-for :greet-get))
+              response (http-get url)
+              response-exp {:body "Hi Youtube" :status ok-code}
+              response-act (select-keys response (keys response-exp))]
+          (run-test response response-exp response-act)))
+      (finally
+        (.stop database-container)))))
 
 (t/deftest get-todo-test
   (let [todo-id (str (random-uuid))
         todo {:id todo-id
               :name "my test todo list"
               :items [{:id (str (random-uuid))
-                       :name "finish the test"}]}]
-    (with-system
-      [sut (core/real-world-clojure-api-system (m-config))]
-      (reset! (-> sut :in-memory-state-component :state-atom)
-              [todo])
-      (new-test "get-todo-test: body from state")
-      (let [url (sut->url sut (url-for :todo-get {:path-params {:todo-id todo-id}}))
-            response (http-get url :json :json)
-            response-exp {:body todo :status ok-code}
-            response-act (select-keys response (keys response-exp))]
-        (run-test response response-exp response-act))
-      (new-test "get-todo-test: empty body from todo not in state 404")
-      (let [url (sut->url sut (url-for :todo-get {:path-params {:todo-id (random-uuid)}}))
-            response (http-get url)
-            response-exp {:body "" :status not-found-code}
-            response-act (select-keys response (keys response-exp))]
-        (run-test response response-exp response-act)))))
+                       :name "finish the test"}]}
+        database-container (doto (PostgreSQLContainer. "postgres:15.4")
+                             (.withDatabaseName "test-database-name")
+                             (.withUsername "Zachary")
+                             (.withPassword "test-password"))]
+    (try
+      (.start database-container)
+      (with-system
+        [sut (core/real-world-clojure-api-system (m-config database-container))]
+        (reset! (-> sut :in-memory-state-component :state-atom)
+                [todo])
+        (new-test "get-todo-test: body from state")
+        (let [url (sut->url sut (url-for :todo-get {:path-params {:todo-id todo-id}}))
+              response (http-get url :json :json)
+              response-exp {:body todo :status ok-code}
+              response-act (select-keys response (keys response-exp))]
+          (run-test response response-exp response-act))
+        (new-test "get-todo-test: empty body from todo not in state 404")
+        (let [url (sut->url sut (url-for :todo-get {:path-params {:todo-id (random-uuid)}}))
+              response (http-get url)
+              response-exp {:body "" :status not-found-code}
+              response-act (select-keys response (keys response-exp))]
+          (run-test response response-exp response-act)))
+      (finally
+        (.stop database-container)))))
 
 (t/deftest post-todo-test
   (let [todo-id (str (random-uuid))
         todo {:id todo-id
               :name "My todo for test"
-              :items []}]
-    (with-system
-      [sut (core/real-world-clojure-api-system {:server {:port (get-free-port)}})]
-      (new-test "post-todo-test: post todo to server")
-      (let [url (sut->url sut (url-for :todo-post))
-            body (json/encode todo)
-            response (http-post url body :json :json :json)
-            response-exp {:body todo :status created-code}
-            response-act (select-keys response (keys response-exp))]
-        (run-test response response-exp response-act))
-      (new-test "post-todo-test: get after posting returns the todo")
-      (let [url (sut->url sut (url-for :todo-get {:path-params {:todo-id todo-id}}))
-            response (http-get url :json :json)
-            response-exp {:body todo :status ok-code}
-            response-act (select-keys response (keys response-exp))]
-        (run-test response response-exp response-act))
-      (new-test "post-todo-test: post with missing body content is 500")
-      (let [url (sut->url sut (url-for :todo-post))
-            body (json/encode {:id todo-id})
-            response (http-post url body :json :json :json)
-            response-exp {:status internal-server-error-code}
-            response-act (select-keys response (keys response-exp))]
-        (run-test response response-exp response-act)))))
+              :items []}
+        database-container (doto (PostgreSQLContainer. "postgres:15.4")
+                             (.withDatabaseName "test-database-name")
+                             (.withUsername "Zachary")
+                             (.withPassword "test-password"))]
+    (try
+      (.start database-container)
+      (with-system
+        [sut (core/real-world-clojure-api-system (m-config database-container))]
+        (new-test "post-todo-test: post todo to server")
+        (let [url (sut->url sut (url-for :todo-post))
+              body (json/encode todo)
+              response (http-post url body :json :json :json)
+              response-exp {:body todo :status created-code}
+              response-act (select-keys response (keys response-exp))]
+          (run-test response response-exp response-act))
+        (new-test "post-todo-test: get after posting returns the todo")
+        (let [url (sut->url sut (url-for :todo-get {:path-params {:todo-id todo-id}}))
+              response (http-get url :json :json)
+              response-exp {:body todo :status ok-code}
+              response-act (select-keys response (keys response-exp))]
+          (run-test response response-exp response-act))
+        (new-test "post-todo-test: post with missing body content is 500")
+        (let [url (sut->url sut (url-for :todo-post))
+              body (json/encode {:id todo-id})
+              response (http-post url body :json :json :json)
+              response-exp {:status internal-server-error-code}
+              response-act (select-keys response (keys response-exp))]
+          (run-test response response-exp response-act)))
+          (finally
+            (.stop database-container)))))
 
 
 (t/deftest content-negotiation-test
-  (with-system
-    [sut (core/real-world-clojure-api-system (m-config))]
-    (new-test "content-negotiation-test: json shall be accepted")
-    (let [url (sut->url sut (url-for :greet-get))
-          response-exp {:body "Hi Youtube" :status ok-code}
-          response (http-get url :json)
-          response-act (select-keys response (keys response-exp))]
-      (run-test response response-exp response-act))
-    (new-test "content-negotiation-test: edn shall be rejected")
-    (let [url (sut->url sut (url-for :greet-get))
-          response (http-get url :edn)
-          response-exp {:body not-acceptable-reason :status not-acceptable-code}
-          response-act (select-keys response (keys response-exp))]
-      (run-test response response-exp response-act))))
+  (let [database-container (doto (PostgreSQLContainer. "postgres:15.4")
+                             (.withDatabaseName "test-database-name")
+                             (.withUsername "Zachary")
+                             (.withPassword "test-password"))]
+    (try
+      (.start database-container)
+      (with-system
+        [sut (core/real-world-clojure-api-system (m-config database-container))]
+        (new-test "content-negotiation-test: json shall be accepted")
+        (let [url (sut->url sut (url-for :greet-get))
+              response-exp {:body "Hi Youtube" :status ok-code}
+              response (http-get url :json)
+              response-act (select-keys response (keys response-exp))]
+          (run-test response response-exp response-act))
+        (new-test "content-negotiation-test: edn shall be rejected")
+        (let [url (sut->url sut (url-for :greet-get))
+              response (http-get url :edn)
+              response-exp {:body not-acceptable-reason :status not-acceptable-code}
+              response-act (select-keys response (keys response-exp))]
+          (run-test response response-exp response-act)))
+      (finally
+        (.stop database-container)))))
