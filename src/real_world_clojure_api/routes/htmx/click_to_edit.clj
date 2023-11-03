@@ -122,7 +122,7 @@
            (-> [:div
                 [:h1 {:class "text-2xl font-bold leading-7 text-gray-900 mb-5"}
                  "Click to edit"]
-                #_(user-details-component
+                (user-details-component
                  @(dependencies->state dependencies))]
                (layout)
                (ok))]
