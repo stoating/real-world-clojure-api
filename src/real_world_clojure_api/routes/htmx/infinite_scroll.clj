@@ -122,12 +122,10 @@
 (defn loader
   [next-page-number]
   [:div.bg-red-100.p-10
-   {
-    :hx-get (str "/htmx/infinite-scroll/items?page=" next-page-number)
+   {:hx-get (str "/htmx/infinite-scroll/items?page=" next-page-number)
     :hx-trigger "revealed"
     :hx-target "this"
-    :hx-swap "outerHTML"
-    }
+    :hx-swap "outerHTML"}
    [:span (format "...loading page %s ..." next-page-number)]])
 
 
