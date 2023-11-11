@@ -90,7 +90,7 @@
 (defn- layout
   [body]
   [:head
-   [:title "HTMX: Click to edit"]
+   [:title "HTMX: Infinite Scroll"]
    (hp/include-js
     "https://cdn.tailwindcss.com"
     "https://unpkg.com/htmx.org@1.9.4?plugins=forms")
