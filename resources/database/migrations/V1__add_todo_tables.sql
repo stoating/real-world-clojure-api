@@ -1,8 +1,8 @@
 create table todo
 (
-    todo_id      uuid primary key default get_random_uuid(),
-    created_at   timestamp not null default current_timestamp,
-    title        text      not null
+    todo_id    uuid primary key default get_random_uuid(),
+    created_at timestamp not null default current_timestamp,
+    title      text      not null
 )
 
 create table todo_item
@@ -12,4 +12,3 @@ create table todo_item
     created_at   timestamp not null default current_timestamp,
     title        text      not null,
 );
-
