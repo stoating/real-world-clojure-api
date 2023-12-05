@@ -41,11 +41,6 @@
                                      :reason "Internal Server Error"}})
 
 (def ok-code (get-in status [:ok :code]))
-(def created-code (get-in status [:created :code]))
-(def not-found-code (get-in status [:not-found :code]))
-(def not-acceptable-code (get-in status [:not-acceptable :code]))
-(def not-acceptable-reason (get-in status [:not-acceptable :reason]))
-(def internal-server-error-code (get-in status [:internal-server-error :code]))
 
 (defn get-free-port
   []
@@ -88,15 +83,6 @@
        (client/get {:accept accept-type
                     :as as-type
                     :throw-exceptions false}))))
-
-(defn http-post
-  [url body accept content-type as]
-  (-> url
-      (client/post {:accept accept
-                    :content-type content-type
-                    :as as
-                    :throw-exceptions false
-                    :body body})))
 
 (defn sut->url
   [sut path]
