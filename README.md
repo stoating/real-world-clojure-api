@@ -3,4 +3,7 @@
 following along the tutorial from:  
 https://www.youtube.com/@andrey.fadeev  
 https://github.com/andfadeev/real-world-clojure-api  
-(go like, star and subscribe)
+(go like, star and subscribe)  
+
+hints:  
+run tests: clj -X:test  

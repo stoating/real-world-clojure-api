@@ -19,12 +19,12 @@
   (connection/component
    HikariDataSource
    (assoc (:db-spec config)
-          :init-fn (fn [datasource]
+          :init-fn (fn [data-source]
                      (log/info "Running database init")
                      (.migrate
                       (.. (Flyway/configure)
-                          (dataSource datasource)
-                             ; https://www.red-gate.com/blog/database-devops/flyway-naming-patterns-matter
+                          (dataSource data-source)
+                          ; https://www.red-gate.com/blog/database-devops/flyway-naming-patterns-matter
                           (locations (into-array String ["classpath:database/migrations"]))
                           (table "schema_version")
                           (load)))))))

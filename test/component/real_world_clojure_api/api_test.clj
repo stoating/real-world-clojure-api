@@ -60,6 +60,7 @@
   ([database-container]
    {:server {:address localhost
              :port (get-free-port)}
+    :htmx {:server {:port (get-free-port)}}
     :db-spec {:jdbcUrl (.getJdbcUrl database-container)
               :userName (.getUsername database-container)
               :password (.getPassword database-container)}}))

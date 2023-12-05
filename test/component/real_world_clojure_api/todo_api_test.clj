@@ -1,11 +1,14 @@
-(ns component.real-world-clojure-api.info-handler-test
+(ns component.real-world-clojure-api.todo-api-test
   (:require [clj-http.client :as client]
             [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
             [clojure.test :as t]
             [com.stuartsierra.component :as component]
+            [honey.sql :as sql]
+            [next.jdbc :as jdbc]
             [real-world-clojure-api.components.pedestal-component :refer [url-for]]
-            [real-world-clojure-api.core :as core])
+            [real-world-clojure-api.core :as core]
+            [next.jdbc.result-set :as rs])
   (:import [java.net ServerSocket]
            [org.testcontainers.containers PostgreSQLContainer]))
 
@@ -59,13 +62,14 @@
   ([database-container]
    {:server {:address localhost
              :port (get-free-port)}
-    :htmx {:server {:port (get-free-port)}}
+    :htmx   {:server {:port (get-free-port)}}
     :db-spec {:jdbcUrl (.getJdbcUrl database-container)
               :userName (.getUsername database-container)
               :password (.getPassword database-container)}}))
 
 ;; low-level defines
 (def m-address (get-in (m-config) [:server :address]))
+
 
 (defmacro with-system
   [[bound-var binding-expr] & body]
@@ -111,21 +115,56 @@
   (t/is (= response-exp
            response-act)))
 
-(t/deftest info-handler-test
+(t/deftest get-todo-test
   (let [database-container (doto (PostgreSQLContainer. "postgres:15.4")
                              (.withDatabaseName "test-database-name")
                              (.withUsername "Zachary")
                              (.withPassword "test-password"))]
     (try
+      (println "starting database-container")
       (.start database-container)
+      (println "database-container" database-container)
       (with-system
         [sut (core/real-world-clojure-api-system (m-config database-container))]
-        (new-test "info-handler-test: return standard greeting")
-        (let [url (sut->url sut (url-for :info-get))
-              response (http-get url)
-              response-exp {:body "Database server version 15.4 (Debian 15.4-2.pgdg120+1)",
-                            :status ok-code}
-              response-act (select-keys response (keys response-exp))]
-          (run-test response response-exp response-act)))
-      (finally
-        (.stop database-container)))))
+        (let [{:keys [data-source]} sut
+              {:keys [todo-id
+                      title]} (jdbc/execute-one!
+                               (data-source)
+                               (-> {:insert-into [:todo]
+                                    :columns [:title]
+                                    :values [["my test todo list"]]
+                                    :returning :*}
+                                   (sql/format))
+                               {:builder-fn rs/as-unqualified-kebab-maps})
+              {:keys [status
+                      body]} (-> (sut->url sut
+                                          (url-for :db-todo-get
+                                                   {:path-params {:todo-id todo-id}}))
+                                (client/get {:accept :json
+                                             :as :json
+                                             :throw-exceptions false})
+                                (select-keys [:body :status]))]
+          (t/is (= status 200))
+          (t/is (some? (:created-at body)))
+          (t/is (=  {:todo-id (str todo-id)
+                     :title title}
+                    (select-keys body [:todo-id :title])))))
+        ;
+        ;
+        #_ (new-test "get-todo-test: body from state")
+        #_ (let [url (sut->url sut (url-for :db-todo-get {:path-params {:todo-id todo-id}}))
+                 response (http-get url :json :json)
+                 response-exp {:body todo :status ok-code}
+                 response-act (select-keys response (keys response-exp))]
+             (run-test response response-exp response-act))
+        ;
+        ;
+        #_ (new-test "get-todo-test: empty body from todo in state 404")
+        #_ (let [url (sut->url sut (url-for :db-todo-get {:path-params {:todo-id (random-uuid)}}))
+                 response (http-get url)
+                 response-exp {:body "" :status not-found-code}
+                 response-act (select-keys response (keys response-exp))]
+             (run-test response response-exp response-act))
+        (finally
+          (println "stopping database-container")
+          (.stop database-container)))))
