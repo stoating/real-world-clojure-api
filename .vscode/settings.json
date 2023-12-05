@@ -45,5 +45,6 @@
       "username": "username",
       "password": "password"
     }
-  ]
+  ],
+  "cmake.configureOnOpen": false
 }
