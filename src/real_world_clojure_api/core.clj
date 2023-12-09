@@ -1,5 +1,6 @@
 (ns real-world-clojure-api.core
-  (:require [clojure.tools.logging :as log]
+  (:require [clojure.pprint :refer [pprint]]
+            [clojure.tools.logging :as log]
             [com.stuartsierra.component :as component]
             [next.jdbc.connection :as connection]
             [real-world-clojure-api.components.example-component
@@ -31,6 +32,10 @@
 
 (defn real-world-clojure-api-system
   [config]
+  (pprint "in real-world-clojure-api-system")
+  (pprint "config")
+  (pprint config)
+  (config/assert-valid-config! config)
   (component/system-map
    :example-component
    (example-component/new-example-component config)
@@ -56,6 +61,7 @@
 (defn -main
   []
   (let [system (-> (config/read-config)
+                   (config/assert-valid-config!)
                    (real-world-clojure-api-system)
                    (component/start-system))]
     (println "Starting real world clojure api service with config")

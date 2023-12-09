@@ -9,4 +9,17 @@
      :htmx {:server {:port 3002}}
      :db-spec {:jdbcUrl "jdbc:postgresql://localhost:5432/database"
                :username "username"
-               :password "password"}})))
+               :password "password"}
+     :input-topics #{"a" "topic-1" "topic-2"}
+     :kafka {:bootstrap.servers "kafka",
+             :application.id "my-app",
+             :auto.offset.reset "earliest",
+             :producer.acks "all",
+             :ssl.keystore.type "PKCS12",
+             :ssl.truststore.type "JKS",
+             :ssl.keystore.location "keystore-location",
+             :ssl.keystore.password "keystore-password",
+             :ssl.key.password "key-password",
+             :ssl.truststore.location "truststore-location",
+             :ssl.truststore.password "truststore-password",
+             :security.protocol "SSL"}})))
